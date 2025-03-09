@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Response Recommendation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #27ae60;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 5px;
+            color: #333;
+            font-size: 18px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SMS Response Recommendation</h1>
+        
+        <div class="form-group">
+            <label for="relationship">Relationship:</label>
+            <select id="relationship">
+                <option value="">Select Relationship</option>
+                <option value="friend">Friend</option>
+                <option value="family">Family</option>
+                <option value="romantic">Romantic</option>
+                <option value="professional">Professional</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="feeling">Feeling:</label>
+            <select id="feeling">
+                <option value="">Select Feeling</option>
+                <option value="positive">Positive</option>
+                <option value="neutral">Neutral</option>
+                <option value="negative">Negative</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="emotion">Emotion:</label>
+            <select id="emotion">
+                <option value="">Select Emotion</option>
+                <!-- Emotions will be populated based on relationship and feeling -->
+            </select>
+        </div>
+        
+        <button id="generate">Generate Response</button>
+        
+        <div class="result" id="result">
+            Your message will appear here...
+        </div>
+    </div>
+
+    <script>
+        // Define emotions for each relationship and feeling
+        const emotions = {
+            friend: {
+                positive: ['happy', 'grateful', 'love', 'excited', 'proud', 'supportive'],
+                neutral: ['busy', 'confused', 'formal', 'planning'],
+                negative: ['sad', 'angry', 'worried', 'overwhelmed']
+            },
+            family: {
+                positive: ['happy', 'grateful', 'love', 'excited', 'proud', 'celebration'],
+                neutral: ['busy', 'confused', 'formal', 'reminder'],
+                negative: ['sad', 'angry', 'worried', 'overwhelmed']
+            },
+            romantic: {
+                positive: ['happy', 'grateful', 'love', 'excited', 'missing', 'anniversary'],
+                neutral: ['busy', 'confused', 'formal', 'planning'],
+                negative: ['sad', 'angry', 'worried', 'apologetic']
+            },
+            professional: {
+                positive: ['happy', 'grateful', 'excited', 'accomplished', 'proud', 'collaboration'],
+                neutral: ['busy', 'confused', 'formal', 'follow-up'],
+                negative: ['sad', 'angry', 'worried', 'urgent']
+            }
+        };
+
+        // Mock messages for standalone version
+        const mockMessages = {
+            friend: {
+                positive: {
+                    happy: "Hey! Just wanted to let you know you made my day brighter! 😊",
+                    grateful: "I really appreciate having you in my life. Thank you for being such an amazing friend! 🙏",
+                    love: "You're the best friend anyone could ask for! So grateful for our friendship! ❤️",
+                    excited: "Can't wait to tell you the amazing news! You're the first person I wanted to share this with! 🎉",
+                    proud: "Just heard about your achievement! You're absolutely crushing it! 🌟",
+                    supportive: "Whatever happens, I've got your back! You're stronger than you know 💪"
+                },
+                neutral: {
+                    busy: "Hey! I'm quite busy right now, but let's catch up soon!",
+                    confused: "Hey, could you help me understand something? Your perspective always helps! 🤔",
+                    formal: "Just following up on what we discussed earlier. Let's touch base when you're free.",
+                    planning: "Should we plan something for the weekend? It's been a while! 📅"
+                },
+                negative: {
+                    sad: "I could really use a friend right now. Mind if we talk? 💔",
+                    angry: "I need to be honest - what happened really hurt me. Can we talk about it? 😤",
+                    worried: "Hey, I'm a bit concerned about you. Are you doing okay? 😟",
+                    overwhelmed: "Life's been a bit much lately. Could use some friend time and maybe ice cream? 🍦"
+                }
+            },
+            family: {
+                positive: {
+                    happy: "You always know how to make our family gatherings special! Can't stop smiling! 😊",
+                    grateful: "I'm so blessed to have you as family. Thank you for always being there! 🙏",
+                    love: "Sending you lots of love! You mean the world to me ❤️",
+                    excited: "Guess what?! I have amazing news to share with my favorite family member! 🎉",
+                    proud: "You make our family proud every single day! Keep shining! ⭐",
+                    celebration: "Our family has another reason to celebrate! Can't wait to share the news! 🎊"
+                },
+                neutral: {
+                    busy: "Hey family, caught up with work but thinking of you! Call you this weekend? 📞",
+                    confused: "Could use some family wisdom on something. Got a minute to chat? 🤔",
+                    formal: "Just confirming the family gathering details for next week.",
+                    reminder: "Don't forget about Sunday's family gathering! Looking forward to seeing you! 📅"
+                },
+                negative: {
+                    sad: "Having a rough day. Could really use some family support right now 💔",
+                    angry: "We need to talk about what happened at the family dinner. It's important to me.",
+                    worried: "Just checking in - haven't heard from you in a while. Everything okay? 😟",
+                    overwhelmed: "Could use some family support right now. Everything feels a bit too much 😔"
+                }
+            },
+            romantic: {
+                positive: {
+                    happy: "Just thinking about you puts the biggest smile on my face! 😊",
+                    grateful: "I'm so thankful to have you in my life. You make everything better! 💝",
+                    love: "Every moment with you feels like magic. You make my heart smile! 💕",
+                    excited: "Can't wait for our next adventure together! You make life so exciting! 🎉",
+                    missing: "Every song I hear reminds me of you. Can't wait to see you again! 🎵",
+                    anniversary: "Happy anniversary to the most amazing person in my life! Every day with you is a gift 🎁"
+                },
+                neutral: {
+                    busy: "Swamped with work but you're on my mind. Talk later? 💭",
+                    confused: "Can we talk when you're free? Need your perspective on something 🤔",
+                    formal: "Just confirming our plans for this weekend.",
+                    planning: "What are your thoughts about dinner this weekend? I found this nice place... 🍽️"
+                },
+                negative: {
+                    sad: "My heart feels heavy. I really need to talk to you 💔",
+                    angry: "We need to talk about what happened. This is important to me.",
+                    worried: "Haven't heard from you in a while and I'm getting worried. Are you okay? 😟",
+                    apologetic: "I've been thinking about our conversation, and I realize I was wrong. I'm truly sorry. 🙏"
+                }
+            },
+            professional: {
+                positive: {
+                    happy: "I'm delighted to share that the project has been a great success! 📈",
+                    grateful: "I wanted to express my sincere appreciation for your support and guidance.",
+                    excited: "Looking forward to our collaboration on this new initiative! 🚀",
+                    accomplished: "I'm pleased to inform you that we've exceeded our quarterly targets. Great teamwork! 📈",
+                    proud: "Excellent work on the presentation. Your contribution was invaluable! ⭐",
+                    collaboration: "Your input on this project has been invaluable. Looking forward to our continued collaboration! 🤝"
+                },
+                neutral: {
+                    busy: "Currently in meetings. I'll respond to your inquiry by end of day.",
+                    confused: "Could we schedule a brief meeting to clarify some points? 📊",
+                    formal: "Thank you for your message. I will review and get back to you shortly.",
+                    "follow-up": "Following up on our previous discussion - have you had a chance to review the proposal?"
+                },
+                negative: {
+                    sad: "Regrettably, I must inform you that we didn't meet the project requirements.",
+                    angry: "We need to address some serious concerns regarding the recent developments.",
+                    worried: "There are some concerning trends in the latest reports that require immediate attention.",
+                    urgent: "Urgent matter requiring your immediate attention. Please call me at your earliest convenience."
+                }
+            }
+        };
+
+        // DOM elements
+        const relationshipSelect = document.getElementById('relationship');
+        const feelingSelect = document.getElementById('feeling');
+        const emotionSelect = document.getElementById('emotion');
+        const generateButton = document.getElementById('generate');
+        const resultDiv = document.getElementById('result');
+
+        // Update emotions based on relationship and feeling
+        function updateEmotions() {
+            const relationship = relationshipSelect.value;
+            const feeling = feelingSelect.value;
+            
+            // Clear current options
+            emotionSelect.innerHTML = '<option value="">Select Emotion</option>';
+            
+            // If both relationship and feeling are selected, populate emotions
+            if (relationship && feeling && emotions[relationship] && emotions[relationship][feeling]) {
+                emotions[relationship][feeling].forEach(emotion => {
+                    const option = document.createElement('option');
+                    option.value = emotion;
+                    option.textContent = emotion.charAt(0).toUpperCase() + emotion.slice(1);
+                    emotionSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Event listeners
+        relationshipSelect.addEventListener('change', updateEmotions);
+        feelingSelect.addEventListener('change', updateEmotions);
+        
+        generateButton.addEventListener('click', () => {
+            const relationship = relationshipSelect.value;
+            const feeling = feelingSelect.value;
+            const emotion = emotionSelect.value;
+            
+            if (!relationship || !feeling || !emotion) {
+                resultDiv.textContent = 'Please select all options';
+                return;
+            }
+            
+            resultDiv.textContent = 'Loading...';
+            
+            // Simulate API call with mock data
+            setTimeout(() => {
+                try {
+                    const message = mockMessages[relationship][feeling][emotion];
+                    resultDiv.textContent = message || "I'm not sure what to say in this situation. Maybe try different options?";
+                } catch (error) {
+                    resultDiv.textContent = 'Error fetching message. Please try again.';
+                    console.error('Error:', error);
+                }
+            }, 500); // Simulate network delay
+        });
+    </script>
+</body>
+</html> 
